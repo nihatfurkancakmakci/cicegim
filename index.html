@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gültenim İçin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg1: #2a0f1f;
+    --bg2: #5a1f3c;
+    --bg3: #f4b6c8;
+    --paper: #fff7f2;
+    --ink: #6b1a3a;
+    --env: #f7d9d4;
+    --env-dark: #e9b9b3;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background: radial-gradient(ellipse 75% 60% at 50% 48%, #4a3330 0%, #241819 45%, #0c0809 100%);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    color: #fff;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* --- Başlangıç ekranı --- */
+  #start {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+    background: radial-gradient(ellipse at center, #3a2726 0%, #0c0809 100%);
+    cursor: pointer; transition: opacity 1.2s ease;
+    text-align: center; padding: 16px;
+  }
+  #start.hide { opacity: 0; pointer-events: none; }
+  #start h1 { font-family: 'Dancing Script', cursive; font-size: clamp(40px, 11vw, 72px); color: #ffd6e2; font-weight: 700; }
+  #start p { font-size: 20px; letter-spacing: 3px; color: #f6c3d3; animation: pulse 1.8s ease-in-out infinite; }
+  #start .heart { font-size: 46px; animation: beat 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+  @keyframes beat { 0%,100% { transform: scale(1); } 15% { transform: scale(1.25); } 30% { transform: scale(1); } 45% { transform: scale(1.15); } }
+
+  /* --- Buket --- */
+  #stage {
+    position: fixed; inset: 0;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  #bouquetWrap {
+    position: relative;
+    height: min(96vh, 150vw); height: min(96dvh, 150vw);
+    aspect-ratio: 400 / 600;
+    transform: translateY(105%);
+  }
+  #bouquetWrap.rise { animation: rise 3.2s cubic-bezier(.2,.8,.25,1) forwards; }
+  @keyframes rise { to { transform: translateY(0); } }
+  #bouquet { width: 100%; height: 100%; overflow: visible; }
+
+  .stem { fill: none; stroke: #3f6a2c; stroke-width: 4; stroke-linecap: round; }
+  .leaf { opacity: 0; transform: scale(0); transform-box: fill-box; transform-origin: 0% 100%; }
+  .grow .leaf { animation: leafIn 1s ease-out forwards; }
+  @keyframes leafIn { to { opacity: 1; transform: scale(1); } }
+
+  .bud { transform: scale(0); transform-box: fill-box; transform-origin: center; }
+  .grow .bud { animation: budIn .9s cubic-bezier(.3,1.6,.5,1) forwards; }
+  @keyframes budIn { to { transform: scale(1); } }
+  .bud.gone { animation: budOut .8s ease forwards !important; }
+  @keyframes budOut { from { transform: scale(1); } to { transform: scale(.4); opacity: 0; } }
+
+  .petal { transform: scale(0) rotate(-25deg); transform-origin: 0 0; opacity: 0; }
+  .bloom .petal { animation: petalOpen 2.4s cubic-bezier(.2,.9,.3,1.05) forwards; }
+  @keyframes petalOpen {
+    0% { transform: scale(0) rotate(-25deg); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+  }
+  .flower { transform-box: fill-box; transform-origin: center; }
+  #bouquet.bloom { transform-origin: 50% 100%; animation: sway 7s ease-in-out 9s infinite; will-change: transform; }
+  @keyframes sway { 0%,100% { transform: rotate(-.8deg); } 50% { transform: rotate(.8deg); } }
+
+  .wrapFront, .wrapBack { opacity: 0; transition: opacity 1.4s ease; }
+  .grow .wrapFront, .grow .wrapBack { opacity: 1; }
+  .ribbon { opacity: 0; transform: scale(0); transform-box: fill-box; transform-origin: center; }
+  .bloom .ribbon { animation: budIn 1s cubic-bezier(.3,1.6,.5,1) 1.2s forwards; }
+
+  /* --- Zarf (buketin üstünde) --- */
+  #envBtn {
+    position: absolute; left: 50%; top: 61%;
+    width: 32%; aspect-ratio: 3 / 2;
+    transform: translate(-50%, -260%) rotate(-8deg); opacity: 0;
+    cursor: pointer; border: none; background: none; z-index: 5;
+    filter: drop-shadow(0 6px 10px rgba(60,10,30,.45));
+  }
+  #envBtn.show { animation: envDrop 1.4s cubic-bezier(.3,1.4,.5,1) forwards; }
+  @keyframes envDrop { to { transform: translate(-50%, -50%) rotate(-6deg); opacity: 1; } }
+  #envBtn.show.idle { animation: envIdle 2.2s ease-in-out infinite; opacity: 1; transform: translate(-50%, -50%) rotate(-6deg); }
+  @keyframes envIdle { 0%,100% { transform: translate(-50%, -50%) rotate(-6deg); } 50% { transform: translate(-50%, -58%) rotate(-3deg); } }
+  #envBtn svg { width: 100%; height: 100%; display: block; }
+  #hint {
+    position: absolute; left: 50%; top: 72%; transform: translateX(-50%);
+    font-family: 'Dancing Script', cursive; font-size: clamp(18px, 4.5vw, 24px); color: #fff0f5;
+    text-shadow: 0 2px 8px rgba(60,10,30,.8); opacity: 0; transition: opacity 1s; white-space: nowrap; pointer-events: none; z-index: 5;
+  }
+  #hint.show { opacity: 1; animation: pulse 2s ease-in-out infinite; }
+
+  /* --- Açılan mektup --- */
+  #letterLayer {
+    position: fixed; inset: 0; z-index: 30;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(25, 6, 15, .55); backdrop-filter: blur(3px);
+    opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .8s ease, visibility 0s .8s; padding: 16px;
+  }
+  #letterLayer.open { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .8s ease, visibility 0s; }
+  .bigEnv {
+    position: relative; width: min(420px, 92vw, 70vh); aspect-ratio: 3 / 2;
+    perspective: 1200px; transform: scale(.6) translateY(30vh); transition: transform 1s cubic-bezier(.2,.9,.3,1.1);
+    margin-top: 34vh;
+  }
+  #letterLayer.open .bigEnv { transform: scale(1) translateY(0); }
+  .envBack { position: absolute; inset: 0; background: var(--env-dark); border-radius: 6px; }
+  .letter {
+    position: absolute; left: 5%; right: 5%; bottom: 6%; height: 88%;
+    background: var(--paper);
+    background-image: repeating-linear-gradient(transparent 0 31px, #f3dcd6 31px 32px);
+    border-radius: 4px; box-shadow: 0 4px 18px rgba(0,0,0,.15);
+    padding: 26px 22px; color: var(--ink); text-align: center;
+    display: flex; flex-direction: column; justify-content: center; gap: 18px;
+    transition: transform 1.4s cubic-bezier(.3,.9,.3,1) 1s, height 1s ease 1s;
+    z-index: 1;
+  }
+  .opened .letter { transform: translateY(-68%); height: 140%; z-index: 4; transition-delay: 1s, 1s; }
+  .letter .l1 { font-family: 'Dancing Script', cursive; font-size: clamp(24px, 6.4vw, 32px); line-height: 1.25; min-height: 2.5em; }
+  .letter .l2 { font-family: 'Dancing Script', cursive; font-size: clamp(30px, 8vw, 42px); font-weight: 700; color: #b0174f; min-height: 1.3em; }
+  .caret::after { content: '|'; animation: pulse .8s steps(1) infinite; margin-left: 2px; color: #c97a98; }
+  .envFront { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+  .envFront svg { width: 100%; height: 100%; display: block; }
+  .flap {
+    position: absolute; left: 0; right: 0; top: 0; height: 58%; z-index: 5;
+    transform-origin: top center; transition: transform 1s ease, z-index 0s .5s;
+  }
+  .flap svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .opened .flap { transform: rotateX(180deg); z-index: 0; }
+  .seal { position: absolute; left: 50%; top: 52%; width: 15%; transform: translate(-50%, -50%); z-index: 6; transition: opacity .4s; }
+  .opened .seal { opacity: 0; }
+  #closeBtn {
+    position: absolute; top: 16px; right: 16px; width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.4); background: rgba(255,255,255,.12); color: #fff; font-size: 22px; cursor: pointer;
+  }
+
+  .bokeh { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; filter: blur(6px);
+    background: radial-gradient(circle, rgba(255,214,170,.55), rgba(255,214,170,0) 70%);
+    animation: drift ease-in-out infinite alternate; }
+  @keyframes drift { to { transform: translate(var(--bx), var(--by)); opacity: .35; } }
+  #stage { z-index: 1; }
+
+  /* --- Düşen yapraklar --- */
+  .fall {
+    position: fixed; top: -30px; z-index: 2; pointer-events: none;
+    width: 14px; height: 18px; border-radius: 80% 0 80% 0;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translate(var(--dx), 110vh) rotate(var(--rot)); }
+  }
+
+  /* --- Müzik --- */
+  #yt { position: fixed; width: 1px; height: 1px; left: -10px; bottom: -10px; opacity: 0; pointer-events: none; }
+  #musicBtn {
+    position: fixed; right: 16px; bottom: 16px; z-index: 40; width: 46px; height: 46px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.35); background: rgba(40,10,25,.45); color: #ffd6e2; font-size: 20px;
+    cursor: pointer; display: none; backdrop-filter: blur(4px);
+  }
+  #musicBtn.on { animation: spin 6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #songLink {
+    position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 40; display: none;
+    color: #ffd6e2; font-size: 16px; background: rgba(40,10,25,.6); padding: 8px 14px; border-radius: 20px; text-decoration: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="start">
+  <div class="heart">🌸</div>
+  <h1>Gültenim için</h1>
+  <p>dokun</p>
+</div>
+
+<div id="stage">
+  <div id="bouquetWrap">
+    <svg id="bouquet" viewBox="0 0 400 600" aria-label="Şakayık buketi">
+      <defs>
+        <linearGradient id="wrapG" x1="0" x2="1">
+          <stop offset="0" stop-color="#f3c9d1"/>
+          <stop offset=".5" stop-color="#fbe3e6"/>
+          <stop offset="1" stop-color="#eebac5"/>
+        </linearGradient>
+        <linearGradient id="wrapG2" x1="0" x2="1">
+          <stop offset="0" stop-color="#d995a6"/>
+          <stop offset="1" stop-color="#c47a8e"/>
+        </linearGradient>
+        <linearGradient id="leafG" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" stop-color="#22401a"/>
+          <stop offset=".55" stop-color="#3d6a2c"/>
+          <stop offset="1" stop-color="#6f9a4e"/>
+        </linearGradient>
+        <linearGradient id="pleat" x1="0" x2="1">
+          <stop offset="0" stop-color="#000" stop-opacity="0"/>
+          <stop offset=".5" stop-color="#7a2a45" stop-opacity=".22"/>
+          <stop offset="1" stop-color="#000" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="pleatHi" x1="0" x2="1">
+          <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+          <stop offset=".5" stop-color="#fff" stop-opacity=".45"/>
+          <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+        </linearGradient>
+        <!-- Yaprak kenarlarına doğal fırfır + yumuşak gölge -->
+        <filter id="ruffle" x="-25%" y="-25%" width="150%" height="150%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.11" numOctaves="2" seed="7" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/>
+          <feDropShadow in="d" dx="0" dy="4" stdDeviation="4" flood-color="#3a0a1c" flood-opacity=".4"/>
+        </filter>
+        <filter id="paper" x="-5%" y="-5%" width="110%" height="110%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.035 0.006" numOctaves="3" seed="2" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <radialGradient id="coreShade">
+          <stop offset="0" stop-color="#3a0718" stop-opacity=".6"/>
+          <stop offset="1" stop-color="#3a0718" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="lightOv" cx=".35" cy=".28" r=".85">
+          <stop offset="0" stop-color="#fff" stop-opacity=".3"/>
+          <stop offset=".45" stop-color="#fff" stop-opacity="0"/>
+          <stop offset=".78" stop-color="#2a0010" stop-opacity=".22"/>
+          <stop offset="1" stop-color="#2a0010" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="soft"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#1c0a10" flood-opacity=".35"/></filter>
+      </defs>
+      <g id="back"></g>
+      <g class="wrapBack" filter="url(#paper)">
+        <path d="M40 250 Q120 300 200 290 Q280 300 360 250 L270 560 L130 560 Z" fill="#c98196"/>
+        <path d="M40 250 L130 560 L160 560 L95 270 Z" fill="url(#pleat)"/>
+        <path d="M360 250 L270 560 L240 560 L305 270 Z" fill="url(#pleat)"/>
+      </g>
+      <g id="stems"></g>
+      <g id="leaves" filter="url(#soft)"></g>
+      <g id="flowers"></g>
+      <g class="wrapFront" filter="url(#paper)">
+        <path d="M45 330 Q90 340 130 380 Q170 420 200 472 L250 600 L120 600 Z" fill="#f2c7d0"/>
+        <path d="M355 330 Q310 340 270 380 Q230 420 200 472 L150 600 L280 600 Z" fill="#f8dbe1"/>
+        <path d="M45 330 L120 600 L150 600 L100 360 Z" fill="url(#pleat)"/>
+        <path d="M355 330 L280 600 L255 600 L300 365 Z" fill="url(#pleat)"/>
+        <path d="M150 420 L185 600 L205 600 Z" fill="url(#pleatHi)"/>
+        <path d="M270 390 L225 600 L240 600 Z" fill="url(#pleatHi)"/>
+        <path d="M355 330 Q310 340 270 380 Q230 420 200 472" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.5"/>
+        <path d="M45 330 Q90 340 130 380 Q170 420 200 472" fill="none" stroke="#e2a3b2" stroke-width="1.5"/>
+      </g>
+      <g class="ribbon">
+        <path d="M200 478 C170 450 140 460 150 482 C160 500 185 490 200 478 Z" fill="#b0174f"/>
+        <path d="M200 478 C230 450 260 460 250 482 C240 500 215 490 200 478 Z" fill="#b0174f"/>
+        <path d="M196 482 L178 540 L188 536 L194 548 L200 484 Z" fill="#94123f"/>
+        <path d="M204 482 L222 540 L212 536 L206 548 L200 484 Z" fill="#94123f"/>
+        <circle cx="200" cy="479" r="9" fill="#c9245f"/>
+      </g>
+    </svg>
+    <button id="envBtn" aria-label="Zarfı aç">
+      <svg viewBox="0 0 150 100">
+        <rect x="1" y="1" width="148" height="98" rx="5" fill="#f7d9d4" stroke="#e2b3ac"/>
+        <path d="M1 99 L75 52 L149 99" fill="#f1cbc5" stroke="#e2b3ac"/>
+        <path d="M1 1 L75 58 L149 1" fill="#fbe6e2" stroke="#e2b3ac"/>
+        <path d="M75 70 c-6-8 -18-4 -14 6 c3 7 14 12 14 12 s11-5 14-12 c4-10 -8-14 -14-6z" fill="#c9245f"/>
+      </svg>
+    </button>
+    <div id="hint">bana dokun 💌</div>
+  </div>
+</div>
+
+<div id="letterLayer">
+  <button id="closeBtn" aria-label="Kapat">×</button>
+  <div class="bigEnv" id="bigEnv">
+    <div class="envBack"></div>
+    <div class="letter">
+      <div class="l1" id="l1"></div>
+      <div class="l2" id="l2"></div>
+    </div>
+    <div class="envFront">
+      <svg viewBox="0 0 300 200" preserveAspectRatio="none">
+        <path d="M0 0 L150 115 L300 0 L300 200 L0 200 Z" fill="#f7d9d4"/>
+        <path d="M0 200 L150 100 L300 200 Z" fill="#f1cbc5"/>
+      </svg>
+    </div>
+    <div class="flap">
+      <svg viewBox="0 0 300 116" preserveAspectRatio="none">
+        <path d="M0 0 L300 0 L150 116 Z" fill="#fbe6e2" stroke="#e9c3bc"/>
+      </svg>
+    </div>
+    <svg class="seal" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#b0174f"/><path d="M20 28 c-5-4 -10-7 -10-12 a5 5 0 0 1 10-2 a5 5 0 0 1 10 2 c0 5-5 8-10 12z" fill="#ffd6e2"/></svg>
+  </div>
+</div>
+
+<div id="yt"></div>
+<button id="musicBtn" aria-label="Müziği aç/kapat">♪</button>
+<a id="songLink" href="https://youtu.be/qqh_4Z6QCyw" target="_blank" rel="noopener">♪ Şarkımızı aç</a>
+
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+const $ = s => document.querySelector(s);
+const el = (tag, attrs, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+};
+
+// Şakayık paletleri: [koyu taban, ana renk, açık kenar]
+const PALETTES = [
+  ['#c9567a', '#f0a3b8', '#fde3ea'],   // Sarah Bernhardt pembesi
+  ['#d9849a', '#f7c4d0', '#fff3f6'],   // açık pembe
+  ['#8f1240', '#d2407a', '#f6a6c2'],   // koyu fuşya
+  ['#d7a3ae', '#f6dfe3', '#fffbf9'],   // beyaza çalan
+  ['#d35d50', '#f39a86', '#fde3d7'],   // mercan
+];
+// Çiçek konumları (x, y, yarıçap, palet)
+const FLOWERS = [
+  [200, 160, 58, 2],
+  [122, 200, 50, 0],
+  [280, 196, 52, 1],
+  [80, 278, 44, 3],
+  [322, 274, 46, 4],
+  [160, 268, 48, 1],
+  [244, 262, 50, 0],
+  [200, 330, 42, 3],
+];
+const BUDS = [[60, 200, 12], [345, 190, 13], [140, 120, 11], [262, 112, 12]];
+const GATHER = [200, 470];
+
+// Dıştaki geniş, ucu dalgalı yaprak (tabanı orijinde, yukarı bakar)
+function petalPath(L, W) {
+  return `M0 0 C${-W*.9} ${-L*.15} ${-W*1.2} ${-L*.7} ${-W*.75} ${-L*.95}
+          Q${-W*.5} ${-L*1.1} ${-W*.25} ${-L*.94} Q${-W*.05} ${-L*1.08} ${W*.15} ${-L*.95}
+          Q${W*.45} ${-L*1.1} ${W*.75} ${-L*.93} C${W*1.2} ${-L*.7} ${W*.9} ${-L*.15} 0 0Z`;
+}
+// İçteki kadeh gibi kıvrık yaprak: +y merkezden dışarı bakar, kenar (y=0) merkeze dönük
+function cupPath(w, h) {
+  return `M${-w} 0 C${-w*1.05} ${h*.9} ${w*1.05} ${h*.9} ${w} 0
+          Q${w*.6} ${h*.22} ${w*.3} ${h*.08} Q0 ${h*.25} ${-w*.3} ${h*.06} Q${-w*.6} ${h*.2} ${-w} 0Z`;
+}
+function cupRim(w, h) {
+  return `M${-w} 0 Q${-w*.6} ${h*.2} ${-w*.3} ${h*.06} Q0 ${h*.25} ${w*.3} ${h*.08} Q${w*.6} ${h*.22} ${w} 0`;
+}
+
+function makeGradients() {
+  const defs = $('#bouquet defs');
+  PALETTES.forEach(([deep, main, pale], i) => {
+    const r = el('radialGradient', { id: `po${i}`, cx: .5, cy: 1, r: 1.05 }, defs);
+    el('stop', { offset: 0, 'stop-color': deep }, r);
+    el('stop', { offset: .5, 'stop-color': main }, r);
+    el('stop', { offset: 1, 'stop-color': pale }, r);
+    const l = el('linearGradient', { id: `pc${i}`, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    el('stop', { offset: 0, 'stop-color': pale }, l);
+    el('stop', { offset: .4, 'stop-color': main }, l);
+    el('stop', { offset: 1, 'stop-color': deep }, l);
+  });
+}
+
+function rand(a, b) { return a + Math.random() * (b - a); }
+
+function stemPath(x, y) {
+  const [gx, gy] = GATHER;
+  const cx = (x + gx) / 2 + (x - gx) * .15, cy = (y + gy) / 2 + 20;
+  const bx = gx + (x - gx) * .06;
+  return `M${x} ${y + 10} Q${cx} ${cy} ${bx} ${gy} L${bx + (x - gx) * .05} 620`;
+}
+
+const stems = $('#stems'), leaves = $('#leaves'), flowers = $('#flowers'), back = $('#back');
+const buds = [];
+let stemEls = [];
+
+function addStem(x, y, w) {
+  const p = el('path', { d: stemPath(x, y), class: 'stem', 'stroke-width': w }, stems);
+  const len = p.getTotalLength();
+  p.style.strokeDasharray = len;
+  p.style.strokeDashoffset = len;
+  stemEls.push(p);
+  return p;
+}
+
+// Şakayık yaprağı: üçlü, ince uzun yaprakçıklar
+function addLeaf(x, y, ang, size, delay) {
+  const g = el('g', { transform: `translate(${x} ${y}) rotate(${ang})` }, leaves);
+  [[-34, .78], [0, 1], [34, .8]].forEach(([a, k]) => {
+    const L = size * k, W = L * .24;
+    const h = el('g', { transform: `rotate(${a + rand(-6, 6)})` }, g);
+    const p = el('path', {
+      d: `M0 0 C${W*1.2} ${-L*.25} ${W*.9} ${-L*.75} ${W*.1} ${-L} C${-W*.4} ${-L*.8} ${-W*1.3} ${-L*.35} 0 0Z`,
+      fill: 'url(#leafG)', class: 'leaf'
+    }, h);
+    const v = el('path', { d: `M0 0 Q${W*.15} ${-L*.5} ${W*.1} ${-L*.95}`, stroke: '#9cc27a', 'stroke-opacity': .55, 'stroke-width': .9, fill: 'none', class: 'leaf' }, h);
+    p.style.animationDelay = v.style.animationDelay = delay + 's';
+  });
+}
+
+function buildFlower([x, y, R, pi], idx) {
+  const outer = `url(#po${pi})`, cup = `url(#pc${pi})`;
+  // Hafif perspektif: kenardaki çiçekler dışa doğru yatık
+  const tilt = (x - 200) * .12, squash = .82 + Math.random() * .1;
+  const g = el('g', { transform: `translate(${x} ${y}) rotate(${tilt}) scale(1 ${squash})` }, flowers);
+  const f = el('g', { class: 'flower' }, g);
+  const base = 3.2 + idx * .35;
+  const petal = (d, fill, holderT, delay, extra = {}) => {
+    const h = el('g', { transform: holderT }, f);
+    const p = el('path', Object.assign({ d, fill, class: 'petal' }, extra), h);
+    p.style.animationDelay = delay + 's';
+    return h;
+  };
+  // 1) Dışa açılan büyük yapraklar (iki halka)
+  [[7, 1.0, .78, 0], [7, .86, .66, .3]].forEach(([n, lk, wk, d]) => {
+    const off = rand(0, 360);
+    for (let i = 0; i < n; i++) {
+      const a = off + i * 360 / n + rand(-10, 10);
+      const L = R * lk * rand(.9, 1.06), W = R * wk * rand(.85, 1.1), dl = base + d + i * .04;
+      const hg = petal(petalPath(L, W), outer, `rotate(${a})`, dl, { stroke: 'rgba(110,20,50,.22)', 'stroke-width': .7 });
+      [-.45, -.15, .15, .45].forEach(k => {
+        const v = el('path', { d: `M0 ${-L*.08} Q${W*k*.9} ${-L*.5} ${W*k*1.1} ${-L*.88}`, fill: 'none', stroke: 'rgba(120,20,55,.13)', 'stroke-width': .6, class: 'petal' }, hg);
+        v.style.animationDelay = dl + 's';
+      });
+    }
+  });
+  const cs = el('circle', { r: R * .62, fill: 'url(#coreShade)', class: 'petal' }, f);
+  cs.style.animationDelay = (base + .5) + 's';
+  // 2) Kadeh gibi kıvrık iç yapraklar: dıştan içe, sarmal dizilim
+  const N = 34;
+  for (let i = 0; i < N; i++) {
+    const t = i / N;                         // 0 dış, 1 merkez
+    const rr = R * .62 * (1 - t) + R * .04;
+    const a = i * 137.5 + rand(-12, 12);     // altın açı
+    const rad = a * Math.PI / 180;
+    const w = R * (.36 - t * .2) * rand(.85, 1.15), h = w * rand(.8, 1.05);
+    const T = `translate(${Math.cos(rad) * rr} ${Math.sin(rad) * rr}) rotate(${a - 90})`;
+    const hg = petal(cupPath(w, h), cup, T, base + .6 + t * 1.4,
+      { stroke: 'rgba(110,20,50,.25)', 'stroke-width': .6 });
+    // kenarda ışık, hemen içinde gölge
+    const sh = el('path', { d: cupRim(w * .95, h), fill: 'none', stroke: 'rgba(90,10,40,.28)', 'stroke-width': 2.2, transform: `translate(0 ${-1.6})`, class: 'petal' }, hg);
+    const hi = el('path', { d: cupRim(w, h), fill: 'none', stroke: 'rgba(255,255,255,.55)', 'stroke-width': .8, class: 'petal' }, hg);
+    sh.style.animationDelay = hi.style.animationDelay = (base + .6 + t * 1.4) + 's';
+  }
+  const lo = el('circle', { r: R * 1.08, fill: 'url(#lightOv)', class: 'petal' }, f);
+  lo.style.animationDelay = (base + 1.2) + 's';
+  // Tomurcuk (açılmadan önce)
+  const bud = el('g', { class: 'bud' }, el('g', { transform: `translate(${x} ${y})` }, flowers));
+  el('circle', { cx: 0, cy: 0, r: R * .32, fill: `url(#po${pi})` }, bud);
+  el('path', { d: `M${-R*.34} 0 Q${-R*.2} ${R*.4} 0 ${R*.38} Q${R*.2} ${R*.4} ${R*.34} 0 Q${R*.15} ${R*.12} 0 ${R*.05} Q${-R*.15} ${R*.12} ${-R*.34} 0Z`, fill: '#4c7a36' }, bud);
+  bud.style.animationDelay = (1.6 + idx * .12) + 's';
+  buds.push({ el: bud, at: base });
+}
+
+function build() {
+  makeGradients();
+  flowers.setAttribute('filter', 'url(#ruffle)');
+  FLOWERS.forEach(([x, y, R]) => addStem(x, y, 4.5));
+  BUDS.forEach(([x, y]) => addStem(x, y, 3));
+  // Yeşillik
+  const leafSpots = [[95, 330, -60, 60], [305, 325, 60, 62], [130, 360, -40, 50], [272, 356, 42, 52], [60, 255, -75, 45], [340, 250, 78, 45], [200, 395, 0, 40], [110, 175, -30, 38], [292, 170, 30, 38]];
+  leafSpots.forEach(([x, y, a, s], i) => addLeaf(x, y, a, s, 1.2 + i * .1));
+  // Küçük tomurcuklar
+  BUDS.forEach(([x, y, r], i) => {
+    const b = el('g', { class: 'bud' }, el('g', { transform: `translate(${x} ${y})` }, back));
+    el('ellipse', { cx: 0, cy: -2, rx: r * .85, ry: r, fill: 'url(#po0)' }, b);
+    el('path', { d: `M${-r} 0 Q0 ${r*1.6} ${r} 0 Q0 ${r*.5} ${-r} 0Z`, fill: '#5d8a42' }, b);
+    b.style.animationDelay = (1.8 + i * .15) + 's';
+  });
+  FLOWERS.forEach(buildFlower);
+}
+
+function startStems() {
+  stemEls.forEach((p, i) => {
+    p.style.transition = `stroke-dashoffset 2.2s ease-out ${.2 + i * .06}s`;
+    p.getBoundingClientRect();
+    p.style.strokeDashoffset = 0;
+  });
+}
+
+// Düşen şakayık yaprakları
+const FALL_COLORS = ['#f7b7c8', '#f39bb3', '#fbd3dc', '#ec7f9e', '#fde7ea'];
+function dropPetal() {
+  const d = document.createElement('div');
+  d.className = 'fall';
+  d.style.left = rand(0, 100) + 'vw';
+  d.style.background = FALL_COLORS[Math.floor(rand(0, FALL_COLORS.length))];
+  d.style.opacity = rand(.5, .9);
+  const s = rand(.6, 1.3);
+  d.style.width = 14 * s + 'px'; d.style.height = 18 * s + 'px';
+  d.style.setProperty('--dx', rand(-120, 120) + 'px');
+  d.style.setProperty('--rot', rand(-540, 540) + 'deg');
+  d.style.animationDuration = rand(7, 13) + 's';
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 14000);
+}
+
+// --- Müzik (YouTube) ---
+const VIDEO_ID = 'qqh_4Z6QCyw';
+let player = null, playerReady = false, wantPlay = false, musicOn = false;
+const tag = document.createElement('script');
+tag.src = 'https://www.youtube.com/iframe_api';
+document.head.appendChild(tag);
+window.onYouTubeIframeAPIReady = () => {
+  player = new YT.Player('yt', {
+    width: 1, height: 1, videoId: VIDEO_ID,
+    playerVars: { autoplay: 0, controls: 0, loop: 1, playlist: VIDEO_ID, playsinline: 1, rel: 0 },
+    events: {
+      onReady: () => { playerReady = true; player.setVolume(80); if (wantPlay) playMusic(); },
+      onStateChange: e => {
+        if (e.data === YT.PlayerState.PLAYING) { musicOn = true; $('#musicBtn').classList.add('on'); }
+        if (e.data === YT.PlayerState.PAUSED) { musicOn = false; $('#musicBtn').classList.remove('on'); }
+      },
+      onError: () => { $('#songLink').style.display = 'block'; $('#musicBtn').style.display = 'none'; }
+    }
+  });
+};
+function playMusic() {
+  wantPlay = true;
+  if (playerReady) { player.unMute(); player.playVideo(); }
+}
+$('#musicBtn').addEventListener('click', () => {
+  if (!playerReady) return;
+  musicOn ? player.pauseVideo() : playMusic();
+});
+
+// --- Akış ---
+for (let i = 0; i < 14; i++) {
+  const b = document.createElement('div');
+  b.className = 'bokeh';
+  const sz = rand(30, 110);
+  Object.assign(b.style, { width: sz + 'px', height: sz + 'px', left: rand(-5, 95) + 'vw', top: rand(-5, 90) + 'vh',
+    opacity: rand(.12, .4), animationDuration: rand(8, 16) + 's' });
+  b.style.setProperty('--bx', rand(-40, 40) + 'px');
+  b.style.setProperty('--by', rand(-40, 40) + 'px');
+  document.body.appendChild(b);
+}
+build();
+$('#start').addEventListener('click', () => {
+  playMusic();
+  $('#start').classList.add('hide');
+  $('#musicBtn').style.display = 'block';
+  const wrap = $('#bouquetWrap');
+  wrap.classList.add('rise');
+  startStems();
+  $('#bouquet').classList.add('grow');
+  setTimeout(() => $('#bouquet').classList.add('bloom'), 100);
+  buds.forEach(b => setTimeout(() => b.el.classList.add('gone'), (b.at - .1) * 1000));
+  setTimeout(() => setInterval(dropPetal, 450), 6000);
+  setTimeout(() => {
+    const env = $('#envBtn');
+    env.classList.add('show');
+    setTimeout(() => { env.classList.add('idle'); $('#hint').classList.add('show'); }, 1500);
+  }, 8000);
+}, { once: true });
+
+// Daktilo efekti
+function typeInto(node, text, speed) {
+  return new Promise(res => {
+    node.classList.add('caret');
+    let i = 0;
+    const t = setInterval(() => {
+      node.textContent = text.slice(0, ++i);
+      if (i >= text.length) { clearInterval(t); node.classList.remove('caret'); res(); }
+    }, speed);
+  });
+}
+
+let letterDone = false;
+$('#envBtn').addEventListener('click', () => {
+  $('#hint').classList.remove('show');
+  $('#letterLayer').classList.add('open');
+  setTimeout(() => $('#bigEnv').classList.add('opened'), 900);
+  if (letterDone) return;
+  letterDone = true;
+  setTimeout(async () => {
+    await typeInto($('#l1'), 'Kalbimin orta yerinde bu nasıl bir cumhuriyet.', 70);
+    await new Promise(r => setTimeout(r, 500));
+    await typeInto($('#l2'), 'Seni Seviyorum Gültenim ♥', 110);
+  }, 3300);
+});
+$('#closeBtn').addEventListener('click', () => {
+  $('#bigEnv').classList.remove('opened');
+  setTimeout(() => $('#letterLayer').classList.remove('open'), 600);
+});
+</script>
+</body>
+</html>
